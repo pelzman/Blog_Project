@@ -16,7 +16,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async signUp(dto: SignUpDto) {
+  async signUp(dto: SignUpDto):Promise<AuthResponse> {
     // check if user already exist
     const userExist = await this.prisma.user.findUnique({
       where: { email: dto.email },
@@ -63,7 +63,7 @@ export class AuthService {
     });
   }
 
-  async login(dto: LoginDto) {
+  async login(dto: LoginDto):Promise<AuthResponse> {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
       include: { role: true },
@@ -91,7 +91,7 @@ export class AuthService {
       name: user.name,
       role: user.role.name,
       token: (await tokens).accessToken,
-      refreshToke: (await tokens).refreshToken,
+      refreshToken: (await tokens).refreshToken,
     });
   }
 
