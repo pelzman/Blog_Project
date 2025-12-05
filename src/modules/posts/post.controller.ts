@@ -1,47 +1,94 @@
-import { Body, Controller, Get, Param, Post, Put } from "@nestjs/common";
-import { PostService } from "./post.service";
-import { PostDto } from "./dtos/post.dto";
- 
-@Controller("users/:userId/posts")
-export class PostController {
-    constructor(
-        private readonly postService:PostService
-    ){}
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  UploadedFile,
+  UploadedFiles,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
+import { PostService } from './post.service';
+import { PostDto } from './dtos/post.dto';
+import { JwtGuard } from 'src/common/auth/guards/jwt.guard';
+import { User } from 'src/common/auth/decorators/user.decorator';
+import { AnyFilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
 
-    @Post()
-    async createPost(@Param('userId') userId:string, @Body() dto:PostDto){
-       const data = await this.postService.createPost(Number(userId), dto)
-          return {
+@Controller()
+export class PostController {
+  constructor(private readonly postService: PostService) {}
+
+  @Post('category/:categoryId/posts')
+  @UseGuards(JwtGuard)
+  @UseInterceptors(AnyFilesInterceptor())
+  async createPost(
+    @User() user,
+    @Param('categoryId') categoryId: string,
+    @Body() dto: PostDto,
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    console.log(dto, '@controller');
+    const file = files?.[0] || null;
+    const data = await this.postService.createPost(
+      user.id,
+      Number(categoryId),
+      dto,
+      file,
+    );
+    return {
       status: 201,
       message: 'Post created successfully',
       data,
-    };  
-    }
-    @Get()
-    async getPosts(@Param('userId') userId:string ){
-       const data = await this.postService.getPosts(Number(userId))
-          return {
+    };
+  }
+  @UseGuards(JwtGuard)
+  @Get('/posts')
+  async getPosts(@User() user, userId: string) {
+    const data = await this.postService.getPosts(user.id);
+    return {
       status: 200,
       message: 'Posts fetched successfully',
       data,
-    };  
-    }
-    @Get(':postId')
-    async getPost(@Param() params:{userId:string, postId:string}){
-       const data = await this.postService.getPost(Number(params.userId), Number(params.postId))
-          return {
+    };
+  }
+  @UseGuards(JwtGuard)
+  @Get('posts/:postId')
+  async getPost(@Param('postId') postId: string, @User() user) {
+    const data = await this.postService.getPost(user.id, Number(postId));
+    return {
       status: 200,
       message: 'Post fetched successfully',
       data,
-    };  
-    }
-    @Put(':postId')
-    async updatePost(@Param() params:{userId:string, postId:string} ,@Body() dto:PostDto){
-       const data = await this.postService.updatePost(Number(params.userId),Number(params.postId) ,dto)
-          return {
+    };
+  }
+  @UseGuards(JwtGuard)
+  @Get('category/:categoryId/posts')
+  async getPostsByCategory(@Param('categoryId') categoryId: string) {
+    const data = await this.postService.getPostsByCategory(Number(categoryId));
+    return {
+      status: 200,
+      message: 'Posts fetched successfully',
+      data,
+    };
+  }
+  @UseGuards(JwtGuard)
+  @Put('posts/:postId')
+  async updatePost(
+    @Param('postId') postId: string,
+    @Body() dto: PostDto,
+    @User() user,
+  ) {
+    const data = await this.postService.updatePost(
+      user.id,
+      Number(postId),
+      dto,
+    );
+    return {
       status: 200,
       message: 'Post updated successfully',
       data,
-    };  
-    }
+    };
+  }
 }

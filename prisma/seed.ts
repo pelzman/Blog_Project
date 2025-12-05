@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
-import { env } from 'src/configs/env.config';
+import { env } from '../src/configs/index';
 const prisma = new PrismaClient();
 
 async function main() {

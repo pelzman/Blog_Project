@@ -9,6 +9,12 @@ export class PostResponseDTO {
   slug: string;
 
   status: string;
+  
+    metaTitle?: string;
+
+    metaDescription?: string;
+  
+    ogImage?: string;
 
 publishedAt  : Date
 

@@ -13,4 +13,13 @@ export class PostDto {
   slug: string;
   @IsString()
   status: PostStatus;
+    @IsString()
+  tags: string[];
+  @IsString()
+  metaTitle?: string;
+  @IsString()
+  metaDescription?: string;
+
+  @IsString()
+  ogImage: Express.Multer.File;
 }
