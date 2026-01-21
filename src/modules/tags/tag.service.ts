@@ -1,7 +1,7 @@
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { CreateTagDTO, TagResponseDTO } from './dtos/create-tag.dto';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { generateSlug } from 'src/common/utils/helpers';
+import { generateSlug } from '../../common/utils/helpers';
 import { plainToInstance } from 'class-transformer';
 
 @Injectable()

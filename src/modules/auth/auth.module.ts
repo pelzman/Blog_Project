@@ -17,7 +17,7 @@ import { JwtGuard } from 'src/common/auth/guards/jwt.guard';
   imports: [
     PrismaModule,
     JwtModule.register({
-      secret: env.JWT_SECRET,
+      secret: env.JWT_SECRET_ACCESS,
       signOptions: { expiresIn: '1d' },
     }),
   ],

@@ -1,4 +1,4 @@
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { SignUpDto } from './dtos/siguUp.dto';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
@@ -7,7 +7,7 @@ import { LoginDto } from './dtos/login.dto';
 import { PayloadDto } from './dtos/payload.dto';
 import { AuthResponse } from './dtos/response.dto';
 import { plainToInstance } from 'class-transformer';
-import { env } from 'src/configs/env.config';
+import { env } from '../../configs/env.config';
 import { RefereshDto } from './dtos/refreshToken.dto';
 @Injectable()
 export class AuthService {
@@ -16,7 +16,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async signUp(dto: SignUpDto):Promise<AuthResponse> {
+  async signUp(dto: SignUpDto): Promise<AuthResponse> {
     // check if user already exist
     const userExist = await this.prisma.user.findUnique({
       where: { email: dto.email },
@@ -63,7 +63,7 @@ export class AuthService {
     });
   }
 
-  async login(dto: LoginDto):Promise<AuthResponse> {
+  async login(dto: LoginDto): Promise<AuthResponse> {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
       include: { role: true },
@@ -104,7 +104,7 @@ export class AuthService {
     };
 
     return this.jwtService.sign(payload, {
-      expiresIn: Number(env.JWT_EXPIRES),
+      expiresIn: Number(env.ACCESS_TTL),
     });
   }
   async getTokens(userId: number, email: string, role: string) {

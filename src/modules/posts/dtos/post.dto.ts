@@ -21,5 +21,5 @@ export class PostDto {
   metaDescription?: string;
 
   @IsString()
-  ogImage: Express.Multer.File;
+  ogImage?: Express.Multer.File;
 }

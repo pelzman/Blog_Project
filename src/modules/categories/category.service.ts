@@ -1,7 +1,7 @@
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { CategoryDTO } from './dtos/category.dto';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { generateSlug } from 'src/common/utils/helpers';
+import { generateSlug } from '../../common/utils/helpers';
 import { plainToInstance } from 'class-transformer';
 import { CategoryResponseDTO } from './dtos/category-response.dto';
 
@@ -17,6 +17,7 @@ export class CategoryService {
 
     const categorydata = await this.prisma.category.create({
       data: {
+      
         name: dto.name,
         slug,
       },

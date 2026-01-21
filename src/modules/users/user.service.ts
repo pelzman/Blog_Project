@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { PostDto } from '../posts/dtos/post.dto';
 import { PostResponseDTO } from '../posts/dtos/post-response.dto';
 import { UserResponseDTO } from './dtos/user-response.dto';
@@ -51,6 +51,7 @@ export class UserService {
     //check if user exist
     const userExist = await this.prisma.user.findUnique({
       where: { id: userId },
+      include:{role:true}
     });
     if (!userExist)
       throw new BadRequestException(
@@ -58,7 +59,7 @@ export class UserService {
       );
     // get role by name
 
-    let updatedRole;
+    let roleName =  userExist.role?.name;
     if(data.role){
    const role = await this.prisma.role.findUnique({
       where: { name: data.role },
@@ -66,10 +67,11 @@ export class UserService {
     if (!role)
       throw new BadRequestException(`role ${data.role} does not exist`);
     // update Role
-     updatedRole = await this.prisma.role.update({
+     const updatedRole  = await this.prisma.role.update({
       where: { id: role?.id },
       data: { name: data.role },
     });
+     roleName = updatedRole.name
     }
   
     const updatedUser = await this.prisma.user.update({
@@ -83,7 +85,7 @@ export class UserService {
         id:updatedUser.id,
         name:updatedUser.name,
         email:updatedUser.email,
-        role: updatedRole.name
+        role: roleName
     })
   }
 }

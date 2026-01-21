@@ -25,6 +25,20 @@ model User {
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
   posts              Post[]
+  token            RefreshToken?
+}
+
+model RefreshToken {
+  jti    String     
+  tokenHash   String
+  expiredAt    DateTime
+  revokeAt   DateTime
+  replacedBy  String
+  createdAt   DateTime @default(now())
+  userAgent   String
+  ip    String
+  userId   Int  @unique
+  user    User  @relation(fields: [userId], references: [id])
 }
 
 model Role {
@@ -63,6 +77,7 @@ model Post {
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
   publishedAt     DateTime?
+
 }
 
 model Tag {

@@ -5,6 +5,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
   UploadedFile,
   UploadedFiles,
   UseGuards,
@@ -67,6 +68,34 @@ export class PostController {
   @Get('category/:categoryId/posts')
   async getPostsByCategory(@Param('categoryId') categoryId: string) {
     const data = await this.postService.getPostsByCategory(Number(categoryId));
+    return {
+      status: 200,
+      message: 'Posts fetched successfully',
+      data,
+    };
+  }
+  @UseGuards(JwtGuard)
+  @Get('allPosts')
+  async getAllPosts(
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+    @Query('categoryId') categoryId?: string,
+    @Query('authorId') authorId?: string,
+    @Query('status') status?: string,
+    @Query('tag') tag?: string,
+    @Query('sort') sort?: string,
+    @Query('search') search?: string,
+  ) {
+    const data = await this.postService.getAllPosts({
+      page: Number(page),
+      limit: Number(limit),
+      categoryId: categoryId ? Number(categoryId) : undefined,
+      authorId: authorId ? Number(authorId) : undefined,
+      status,
+      tag,
+      sort,
+      search,
+    });
     return {
       status: 200,
       message: 'Posts fetched successfully',

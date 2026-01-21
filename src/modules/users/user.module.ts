@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { UserService } from './user.service';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { UserController } from './user.controller';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtGuard } from 'src/common/auth/guards/jwt.guard';

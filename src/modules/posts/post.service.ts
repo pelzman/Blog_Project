@@ -1,4 +1,4 @@
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { PostDto } from './dtos/post.dto';
 import {
   BadRequestException,
@@ -8,9 +8,10 @@ import {
 import { UserService } from '../users/user.service';
 import { PostResponseDTO } from './dtos/post-response.dto';
 import { plainToInstance } from 'class-transformer';
-import { generateSlug } from 'src/common/utils/helpers';
+import { generateSlug } from '../../common/utils/helpers';
 import { UpdatePostDTO } from './dtos/update-post.dto';
-import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { CloudinaryService } from '../../cloudinary/cloudinary.service';
+import { PostResponseWithPaginationDTO } from './dtos/post-response-pagination.dto';
 
 @Injectable()
 export class PostService {
@@ -24,7 +25,7 @@ export class PostService {
     userId: number,
     categoryId: number,
     dto: PostDto,
-    file: Express.Multer.File,
+    file : Express.Multer.File | null,
   ): Promise<PostResponseDTO | null> {
     await this.isUserExist(userId);
 
@@ -33,16 +34,15 @@ export class PostService {
     });
     if (!category)
       throw new BadRequestException('you must create a category to add posts');
-   
+
     //chech if post already exist
 
-  
     const tagArray = Array.isArray(dto.tags)
       ? dto.tags
       : typeof dto.tags === 'string'
         ? JSON.parse(dto.tags)
         : [];
-        console.log(tagArray, "array")
+    console.log(tagArray, 'array');
     const tags = await Promise.all(
       tagArray.map(async (tag) => {
         const slug = await generateSlug(tag);
@@ -53,19 +53,24 @@ export class PostService {
         });
       }),
     );
-     const slug = await generateSlug(dto?.title);
+    const slug = await generateSlug(dto?.title);
+  let imageUrl :string | null = null
+    if(file){
   const { secure_url } = await this.cloudinary.uploadImage(file);
+  imageUrl = secure_url
+    }
+  
     const post = await this.prisma.post.create({
       data: {
-        title:dto.title,
-        content:dto.content,
-        excerpt :dto.excerpt,
+        title: dto.title,
+        content: dto.content,
+        excerpt: dto.excerpt,
         slug,
         publishedAt: new Date(),
         author: { connect: { id: userId } },
         metaTitle: dto.metaTitle,
         metaDescription: dto.metaDescription,
-        ogImage: secure_url,
+        ogImage: imageUrl,
         tags: {
           create: tags.map((tag) => ({
             tagId: tag.id,
@@ -82,13 +87,12 @@ export class PostService {
         },
       },
     });
-  //   for(const tag of tags){
-  //  await this.prisma.postTag.create({data:{
-  //   postId:post.id,
-  //   tagId: tag.
-  //  }})
-  //   }
-    
+    //   for(const tag of tags){
+    //  await this.prisma.postTag.create({data:{
+    //   postId:post.id,
+    //   tagId: tag.
+    //  }})
+    //   }
 
     console.log(post);
     return plainToInstance(PostResponseDTO, {
@@ -120,9 +124,91 @@ export class PostService {
     return plainToInstance(PostResponseDTO, post);
   }
 
-  async getPostsByCategory(categoryId:number):Promise<PostResponseDTO[]>{
-   const posts = await this.prisma.post.findMany({where:{categoryId}})
-   return plainToInstance(PostResponseDTO, posts)
+  async getPostsByCategory(categoryId: number): Promise<PostResponseDTO[]> {
+    const posts = await this.prisma.post.findMany({ where: { categoryId } });
+    return plainToInstance(PostResponseDTO, posts);
+  }
+
+  async getAllPosts(query: {
+    page: number;
+    limit: number;
+    categoryId?: number;
+    authorId?: number;
+    status?: string;
+    tag?: string;
+    sort?: string;
+    search?: string;
+  }): Promise<PostResponseWithPaginationDTO> {
+    const { page, limit, categoryId, authorId, status, tag, sort, search } =
+      query;
+    let where: any = {};
+    const skip = (page - 1) * limit;
+    //Filters
+    if (categoryId) where.categoryId = categoryId;
+    if (status) where.status = status;
+    if (authorId) where.authorId = authorId;
+    //Tag filtering
+    if (tag) {
+      where.tags = {
+        some: {
+          tag: {
+            name: tag,
+          },
+        },
+      };
+    }
+
+    //Full Text Search
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { content: { contains: search, mode: 'insensitive' } },
+        { excerpt: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    //Sorting
+    let orderBy: any = {};
+    switch (sort) {
+      case 'latest':
+        orderBy = { createdAt: 'desc' };
+        break;
+      case 'oldest':
+        orderBy = { createdAt: 'asc' };
+        break;
+      default:
+        orderBy = { createdAt: 'desc' };
+    }
+
+    const posts = await this.prisma.post.findMany({
+      skip,
+      take: limit,
+      where,
+      orderBy,
+      include: {
+        author: {
+          select: { id: true, name: true },
+        },
+        tags: {
+          include: {
+            tag: true,
+          },
+        },
+        category: true,
+      },
+    });
+    const total = await this.prisma.post.count({ where });
+
+    const result = {
+      posts,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPage: Math.ceil(total / limit),
+      },
+    };
+    return plainToInstance(PostResponseWithPaginationDTO, result);
   }
   async updatePost(
     userId: number,
